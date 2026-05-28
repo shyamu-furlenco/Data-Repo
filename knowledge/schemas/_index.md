@@ -6,7 +6,7 @@
 
 ## Tables per schema
 
-**order_management_systems_evolve:** `orders`, `items`, `attachments`, `composite_items`
+**order_management_systems_evolve:** `orders`, `items`, `attachments`, `composite_items`, `state_transitions`, `events`, `side_effects`
 
 ## Notes
 

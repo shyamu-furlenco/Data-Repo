@@ -18,9 +18,9 @@ All tables are Silver (CDC-sourced). There are no Gold materialized views yet. A
 
 ## Rules
 
-- **CDC filter required:** Every query on `items`, `attachments`, or `orders` must include `Op != 'D'` to exclude deleted/replaced CDC records. Without this filter results will be inflated and incorrect.
+- **CDC filter required:** Every query on any table must include `Op != 'D'` to exclude deleted/replaced CDC records. Without this filter results will be inflated and incorrect.
 - **Never `SELECT *`** — always select only the columns you need.
-- **Always LIMIT** — default to `LIMIT 1000` unless the user asks for totals/aggregates.
+- **Always LIMIT** — default to `LIMIT 10000` unless the user asks for totals/aggregates.
 - **Variant columns** — use flattened sibling columns (e.g. `pricing_details_baseprice`) for simple queries. Flattened columns are lowercase, no camelCase. Only cast variant directly when the flattened column doesn't exist.
 - **Cite your source** — always state which table you queried and the `updated_at` range of the data.
 - **Explain for non-technical users** — after showing results, give a one-sentence plain-English summary.
@@ -35,6 +35,9 @@ All tables are Silver (CDC-sourced). There are no Gold materialized views yet. A
 | items | `furlenco_silver.order_management_systems_evolve.items` |
 | attachments | `furlenco_silver.order_management_systems_evolve.attachments` |
 | composite_items | `furlenco_silver.order_management_systems_evolve.composite_items` |
+| events | `furlenco_silver.order_management_systems_evolve.events` |
+| state_transitions | `furlenco_silver.order_management_systems_evolve.state_transitions` |
+| side_effects | `furlenco_silver.order_management_systems_evolve.side_effects` |
 
 ## Example query structure
 
