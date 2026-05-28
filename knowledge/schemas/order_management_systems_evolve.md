@@ -28,7 +28,6 @@ redshift_schema: — (migrated, access removed)
 
 - `order_id` — links `items.order_id` and `attachments.order_id` to `orders.id`
 - `user_id` — consistent across all three tables; identifies the customer
-- `catalog_item_id` — product catalog reference in items and attachments
 
 ## Business verticals
 
