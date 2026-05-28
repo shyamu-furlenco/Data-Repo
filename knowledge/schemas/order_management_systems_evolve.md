@@ -23,12 +23,14 @@ redshift_schema: — (migrated, access removed)
 | items | Silver (CDC) | ~2.7M rows. Individual rented or purchased products within an order. |
 | attachments | Silver (CDC) | ~27K rows. Add-on products linked to a composite_item, tracked separately from primary items. |
 | composite_items | Silver (CDC) | ~27K rows. Groups one primary item with its accessory attachments. |
+| state_transitions | Silver (CDC) | Every state change on every entity, with a full JSON snapshot and a link back to the triggering event. |
+| events | Silver (CDC) | ~32M rows. Append-only log of every business event — the "why" behind every state change. |
+| side_effects | Silver (CDC) | ~128M rows. Every downstream action triggered by a state transition — fulfillments, payments, notifications. The "did it actually happen?" table. |
 
 ## Common join keys
 
 - `order_id` — links `items.order_id` and `attachments.order_id` to `orders.id`
 - `user_id` — consistent across all three tables; identifies the customer
-- `catalog_item_id` — product catalog reference in items and attachments
 
 ## Business verticals
 
