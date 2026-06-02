@@ -81,21 +81,21 @@ These named groupings are used in business logic — useful to know when filteri
 | user_details_emailid | variant | Flattened: customer email. | `"x@y.com"` | Yes |
 | user_details_id | variant | Flattened: customer id at order time (may differ from current `user_id` if user was merged). | `987654` | Yes |
 | user_details_name | variant | Flattened: customer name at order time. | `"Jane Doe"` | Yes |
-| created_at | timestamp | Order creation time | `2025-03-15T10:30:00Z` | No |
-| updated_at | timestamp | Last update time | `2025-03-15T11:00:00Z` | No |
-| sfd_captured_at | timestamp | Scheduled first delivery captured time | `2025-03-15T10:32:00Z` | Yes |
+| created_at | timestamp | Order creation time (stored in UTC — convert to IST for display: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`) | `2025-03-15T10:30:00Z` | No |
+| updated_at | timestamp | Last update time (stored in UTC) | `2025-03-15T11:00:00Z` | No |
+| sfd_captured_at | timestamp | Scheduled first delivery captured time (stored in UTC) | `2025-03-15T10:32:00Z` | Yes |
 | cdc_at | string | CDC event capture timestamp | `"2025-03-15T11:00:00.123Z"` | No |
 | Op | string | CDC operation: I=Insert, U=Update, D=Delete | `"I"` | No |
 | ingestion_timestamp | timestamp | When record arrived in Databricks | `2025-03-15T11:00:05Z` | No |
 
 ## Common queries
 
-**Orders placed this month:**
+**Orders placed this month (IST):**
 ```sql
 SELECT COUNT(*) as order_count
 FROM furlenco_silver.order_management_systems_evolve.orders
 WHERE Op != 'D'
-  AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+  AND CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at) >= DATE_TRUNC('month', CURRENT_DATE)
 ```
 
 **Orders by vertical and state:**
@@ -121,6 +121,7 @@ LIMIT 20
 ## Caveats
 
 - Always filter `Op != 'D'` — without this, cancelled/replaced CDC records inflate counts.
+- All timestamp columns (`created_at`, `updated_at`, `sfd_captured_at`) are stored in UTC. Convert to IST (UTC+5:30) for any user-facing date/time output or when filtering by business date: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`.
 - `payment_details_payable` is a JSON object (not a decimal). For the order total: `CAST(payment_details_payable:total AS DECIMAL(18,2))`.
 - Boolean-named columns (`is_upsell`, `is_sfd_selected`, `is_opted_for_early_fulfillment`, `is_migrated_for_evolve`) store literal strings `'true'`/`'false'`. Compare with strings: `WHERE is_sfd_selected = 'true'`, NOT `= true`.
 - `state` is set at the order level; individual item progress is tracked in the `items` table.
