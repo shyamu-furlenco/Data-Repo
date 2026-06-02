@@ -140,4 +140,4 @@ LIMIT 20
 - `state` is set at the order level; individual item progress is tracked in the `items` table.
 - **Plan multi-order pattern (UNLMTD):** A plan can have multiple orders sharing the same `plan_id`. Only the first order has `payment_details` populated — the service enforces this: subsequent orders are only allowed after the originating order is paid, and their `payment_details` is stored as `{}`. When querying payment amounts, filter to the first order per plan (`plan_id IS NULL OR <join to plans and filter originating_order_id>`), otherwise empty `payment_details` will return nulls or zeros.
 - `_rescued_data` is an Auto Loader system column for malformed rows — ignore for analytics.
-- **Unique constraints:** `display_id` is globally unique. `(cart_id, vertical)` is unique — there can only be one order per cart+vertical combination. Duplicate counts on these columns always indicate a CDC multi-version issue, not real duplicates.
+- **Unique constraints:** `display_id` is globally unique. `(cart_id, vertical)` is unique — there can only be one order per cart+vertical combination. 
