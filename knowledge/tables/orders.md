@@ -54,7 +54,7 @@ These named groupings are used in business logic — useful to know when filteri
 | is_upsell | string | Whether this is an upsell order | `"false"` | No |
 | is_sfd_selected | string | Whether scheduled first delivery was selected | `"true"` | No |
 | is_opted_for_early_fulfillment | string | Customer opted for early delivery | `"false"` | No |
-| snapshotted_delivery_address_id | bigint | Delivery address locked at order time | `11223` | No |
+| snapshotted_delivery_address_id | bigint | Delivery address locked at order time — join to `snapshotted_addresses` on this id to find full address info | `11223` | No |
 | snapshotted_billing_address_id | bigint | Billing address locked at order time | `11224` | No |
 | payment_details | variant | Full payment JSON — use flattened columns for simple queries. Empty (`{}`) for subsequent orders under a plan (see `plan_id`). | `{...}` | Yes |
 | payment_details_payable | variant | JSON object with keys `total`, `byCashPostTax`, `byCashPreTax`, `tax`. For the order total, use `CAST(payment_details_payable:total AS DECIMAL(18,2))`. | `{"total":"5268.04",...}` | Yes |
@@ -68,7 +68,7 @@ These named groupings are used in business logic — useful to know when filteri
 | is_migrated_for_evolve | string | `'true'`/`'false'` — order migrated from the legacy OMS. Stored as string, not boolean. | `"false"` | No |
 | migration_details | variant | Migration metadata JSON. Populated for legacy-system migrated orders only. | `{...}` | Yes |
 | experiments_snapshot | variant | A/B experiment buckets active at order time (JSONB array, default `[]`). | `[...]` | Yes |
-| payment_details_id | variant | Flattened from `payment_details`: payment record id. | `"abc123"` | Yes |
+| payment_details_id | variant | Flattened from `payment_details`: payment record id. | `"12345678"` | Yes |
 | payment_details_payableafterpaymentoffers | variant | Flattened: payable amount after applying payment offers (JSON object). | `{...}` | Yes |
 | payment_details_total | variant | Flattened: payable total at payment-details level (JSON object). | `{...}` | Yes |
 | payment_details_discounts | variant | Flattened: discount detail (JSON object). | `{...}` | Yes |
@@ -77,7 +77,7 @@ These named groupings are used in business logic — useful to know when filteri
 | autopay_details_eligible | variant | Flattened: whether order is autopay-eligible. | `"true"` | Yes |
 | autopay_details_maxmandateamount | variant | Flattened: max mandate amount for autopay. | `"5000"` | Yes |
 | user_details_contactno | variant | Flattened: customer contact number at order time. | `"+91XXXXXXXXXX"` | Yes |
-| user_details_displayid | variant | Flattened: customer display ID. | `"USR-001"` | Yes |
+| user_details_displayid | variant | Flattened: customer display ID (fur_id). | `"FUR12345678910"` | Yes |
 | user_details_emailid | variant | Flattened: customer email. | `"x@y.com"` | Yes |
 | user_details_id | variant | Flattened: customer id at order time (may differ from current `user_id` if user was merged). | `987654` | Yes |
 | user_details_name | variant | Flattened: customer name at order time. | `"Jane Doe"` | Yes |
@@ -114,6 +114,19 @@ SELECT source, channel, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.orders
 WHERE Op != 'D'
 GROUP BY source, channel
+ORDER BY cnt DESC
+LIMIT 20
+```
+
+**Orders by address state/city:**
+```sql
+SELECT sa.state, sa.city, COUNT(*) as cnt
+FROM furlenco_silver.order_management_systems_evolve.orders AS ord
+LEFT JOIN furlenco_silver.order_management_systems_evolve.snapshotted_addresses AS sa
+  ON ord.snapshotted_delivery_address_id = sa.id
+WHERE ord.Op != 'D'
+  AND sa.Op != 'D'
+GROUP BY sa.state, sa.city
 ORDER BY cnt DESC
 LIMIT 20
 ```
