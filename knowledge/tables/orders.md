@@ -21,6 +21,7 @@ One record per customer order. An order is the top-level container — it holds 
 | `FULFILLMENT_IN_PROGRESS` | Actively being processed |
 | `AWAITING_KYC_APPROVAL` | Blocked on customer KYC |
 | `AWAITING_PAYMENT` | Blocked on payment confirmation |
+| `NULL` | Sentinel/unset state — edge case, not expected in production data |
 
 ## State groupings
 
@@ -29,9 +30,11 @@ These named groupings are used in business logic — useful to know when filteri
 | Group | States |
 |-------|--------|
 | Pre-delivery cancellable | `AWAITING_PAYMENT`, `AWAITING_KYC_APPROVAL`, `TO_BE_FULFILLED` |
+| Cancellable | `AWAITING_PAYMENT`, `AWAITING_KYC_APPROVAL`, `TO_BE_FULFILLED`, `FULFILLMENT_IN_PROGRESS` |
 | Pre-delivery | `AWAITING_PAYMENT`, `AWAITING_KYC_APPROVAL`, `TO_BE_FULFILLED`, `FULFILLMENT_IN_PROGRESS` |
 | Terminal | `FULFILLED`, `CANCELLED` |
 | KYC pending | `AWAITING_PAYMENT`, `AWAITING_KYC_APPROVAL` |
+| SFD eligible | `AWAITING_KYC_APPROVAL`, `TO_BE_FULFILLED` |
 
 ## Columns
 
@@ -47,7 +50,7 @@ These named groupings are used in business logic — useful to know when filteri
 | cart_checkout_id | bigint | Checkout session reference | `7788` | Yes |
 | placed_by | string | Who placed the order | `"customer"` | No |
 | source | string | App platform: ANDROID, IOS, MWEB, WEB, OFFLINE_STORE, EVOLVE_MIGRATION, SYSTEM_TRIGGERED | `"ANDROID"` | No |
-| channel | string | Sales channel: CUSTOMER, DUKAAN_INTERNAL, INSIDE_SALES, RETENTION_RELOCATION, DUKAAN_EXTERNAL, SFL_DEALER, CHANNEL_SALES_NOBROKER, EXTERNAL_SALE_AMAZON | `"CUSTOMER"` | No |
+| channel | string | Sales channel: CUSTOMER, CHANNEL_SALES_NOBROKER, DUKAAN_INTERNAL, DUKAAN_EXTERNAL, EXTERNAL_SALE_AMAZON, INSIDE_SALES, RETENTION_SWAP, RETENTION_RELOCATION, SFL_DEALER | `"CUSTOMER"` | No |
 | is_upsell | string | Whether this is an upsell order | `"false"` | No |
 | is_sfd_selected | string | Whether scheduled first delivery was selected | `"true"` | No |
 | is_opted_for_early_fulfillment | string | Customer opted for early delivery | `"false"` | No |
@@ -64,7 +67,7 @@ These named groupings are used in business logic — useful to know when filteri
 | serviceability_master | variant | Delivery serviceability metadata | `{...}` | No |
 | is_migrated_for_evolve | string | `'true'`/`'false'` — order migrated from the legacy OMS. Stored as string, not boolean. | `"false"` | No |
 | migration_details | variant | Migration metadata JSON. Populated for legacy-system migrated orders only. | `{...}` | Yes |
-| experiments_snapshot | string | JSON-string of A/B experiment buckets active at order time. | `"{...}"` | Yes |
+| experiments_snapshot | variant | A/B experiment buckets active at order time (JSONB array, default `[]`). | `[...]` | Yes |
 | payment_details_id | variant | Flattened from `payment_details`: payment record id. | `"abc123"` | Yes |
 | payment_details_payableafterpaymentoffers | variant | Flattened: payable amount after applying payment offers (JSON object). | `{...}` | Yes |
 | payment_details_total | variant | Flattened: payable total at payment-details level (JSON object). | `{...}` | Yes |
