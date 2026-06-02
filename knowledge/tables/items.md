@@ -61,6 +61,7 @@ Named groupings used in business logic (sourced from named constants in `ItemSta
 | Cancellable | `CANCELLABLE_STATES` | `CREATED`, `AWAITING_STOCK`, `DELIVERY_SCHEDULED`, `DELIVERY_TO_BE_SCHEDULED` |
 | Fulfilled | `FULFILLED_STATES` | `DELIVERED`, `INSTALLED` |
 | Active (on rent) | `ACTIVE_STATES` | `ACTIVE`, `SERVICE_ACTIVITY_IN_PROGRESS` |
+| With customer | *(business concept)* | `ACTIVE`, `AWAITING_RENEWAL_PAYMENT`, `RENEWAL_OVERDUE`, `SERVICE_ACTIVITY_IN_PROGRESS` |
 | Returnable | `RETURNABLE_STATES` | `ACTIVE`, `RENEWAL_OVERDUE` |
 | Pre-pickup | `PRE_PICKUP_STATES` | `PICKUP_TO_BE_SCHEDULED`, `PICKUP_SCHEDULED`, `OUT_FOR_PICKUP` |
 | Swap-eligible | `SWAP_ELIGIBLE_STATES` | `ACTIVE`, `PICKUP_TO_BE_SCHEDULED`, `PICKUP_SCHEDULED`, `RENEWAL_OVERDUE` |
@@ -193,10 +194,11 @@ Named groupings used in business logic (sourced from named constants in `ItemSta
 ```sql
 SELECT COUNT(*) as active_items
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE Op != 'D'
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 ```
 
-**Items scheduled for delivery today:**
+**Items delivered today:**
 ```sql
 SELECT id, display_id, name, state, user_id
 FROM furlenco_silver.order_management_systems_evolve.items
@@ -205,7 +207,7 @@ WHERE Op != 'D'
 LIMIT 500
 ```
 
-**Items due for pickup this week:**
+**Items picked up this week:**
 ```sql
 SELECT id, display_id, name, state, pickup_date
 FROM furlenco_silver.order_management_systems_evolve.items
@@ -280,7 +282,9 @@ When a customer renews, items go through two phases. These are the columns that 
 - `tenure_end_date` can be null for open-ended subscriptions — don't assume it's always set.
 - `charged_till_date` is separate from `tenure_end_date`; use `charged_till_date` for billing questions.
 - Boolean-named columns (`is_autopay_enabled`, `manually_marked_as_npa`, `currently_npa`, `marked_as_rent_to_purchase_eligible`, `is_migrated_for_evolve`) store literal strings `'true'`/`'false'`. Compare with strings: `WHERE is_autopay_enabled = 'true'`, NOT `= true`.
-- **`state = 'ACTIVE'` is not the same as "currently on rent."** Items under an active service visit have state `SERVICE_ACTIVITY_IN_PROGRESS`, not `ACTIVE`. For "currently in use" counts use `state IN ('ACTIVE', 'SERVICE_ACTIVITY_IN_PROGRESS')` (the `ACTIVE_STATES` grouping).
+- **`state = 'ACTIVE'` alone is not enough for most business questions.** Use the right grouping:
+  - *Item is with the customer (on rent):* `state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')` — the **With customer** grouping.
+  - *Item currently in use (no overdue/payment-pending):* `state IN ('ACTIVE', 'SERVICE_ACTIVITY_IN_PROGRESS')` — the `ACTIVE_STATES` grouping.
 - **NPA columns are nullable.** `currently_npa` and `manually_marked_as_npa` are NULL in ~57% of rows (1.55M of 2.72M items). `WHERE currently_npa = 'true'` is safe (NULL excluded). `WHERE currently_npa != 'true'` will SILENTLY drop NULL rows — use `WHERE currently_npa IS NULL OR currently_npa != 'true'` if you mean "not flagged."
 - **Renewal-cycle variant columns are nullable until the cycle starts.** `renewal_pricing_details`, `renewal_payment_details`, `renewal_offers_snapshot` are NULL for ~99% of items (only populated when item nears renewal).
 - Many variant columns have flattened equivalents (lowercase, no camelCase). Prefer flattened columns for filters/aggregates and `CAST(... AS DECIMAL(18,2))` for math — e.g. `CAST(pricing_details_baseprice AS DECIMAL(18,2))` or `CAST(payment_details_payable:total AS DECIMAL(18,2))`.

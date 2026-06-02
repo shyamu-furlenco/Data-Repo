@@ -8,17 +8,17 @@ Single source of truth for Furlenco business terms. Every team uses these defini
 
 ## Active Item
 **Definition:** An item currently on rent with a customer — not yet picked up, not cancelled. Tracked in the `items` table; current count ~618,000 items.
-**SQL:** `state in ('ACTIVE','AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'REPLACEMENT_IN_PROGRESS', 'SERVICE_ACTIVITY_IN_PROGRESS') AND Op != 'D'`
+**SQL:** `state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS') AND Op != 'D'`
 **Owner:** Data team
-**Last updated:** 2026-05-26
+**Last updated:** 2026-06-03
 
 ---
 
 ## Active Attachment
 **Definition:** An add-on product currently on rent with a customer. Tracked in the `attachments` table; current count ~4,200 attachments.
-**SQL:** `state in ('ACTIVE','AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'REPLACEMENT_IN_PROGRESS', 'SERVICE_ACTIVITY_IN_PROGRESS') AND Op != 'D'`
+**SQL:** `state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS') AND Op != 'D'`
 **Owner:** Data team
-**Last updated:** 2026-05-26
+**Last updated:** 2026-06-03
 
 ---
 
@@ -204,10 +204,10 @@ SELECT SUM(CAST(pricing_details_baseprice AS DECIMAL(18,2))) AS mrr
 FROM furlenco_silver.order_management_systems_evolve.items
 WHERE Op != 'D'
   AND acquisition_type = 'RENT'
-  AND state IN ('ACTIVE','RENEWAL_OVERDUE','AWAITING_RENEWAL_PAYMENT')
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 ```
 **Owner:** Data team
-**Last updated:** 2026-05-26
+**Last updated:** 2026-06-03
 **Status:** draft — pending data team review
 
 ---

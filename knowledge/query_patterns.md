@@ -58,7 +58,8 @@ WHERE Op != 'D'
 ```sql
 SELECT COUNT(*) as active_items
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE Op != 'D'
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 ```
 
 ### Item state breakdown
@@ -70,7 +71,7 @@ GROUP BY state
 ORDER BY cnt DESC
 ```
 
-### Items scheduled for delivery today
+### Items delivered today
 ```sql
 SELECT id, display_id, name, state, user_id, delivery_date
 FROM furlenco_silver.order_management_systems_evolve.items
@@ -79,7 +80,7 @@ WHERE Op != 'D'
 LIMIT 500
 ```
 
-### Items due for pickup this week
+### Items picked-up this week
 ```sql
 SELECT id, display_id, name, state, pickup_date
 FROM furlenco_silver.order_management_systems_evolve.items
@@ -151,7 +152,8 @@ LIMIT 200
 ```sql
 SELECT COUNT(*) as active_attachments
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE Op != 'D'
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 ```
 
 ### All attachments for a specific order
@@ -236,7 +238,7 @@ SELECT SUM(CAST(pricing_details_baseprice AS DECIMAL(18,2))) AS mrr
 FROM furlenco_silver.order_management_systems_evolve.items
 WHERE Op != 'D'
   AND acquisition_type = 'RENT'
-  AND state IN ('ACTIVE','RENEWAL_OVERDUE','AWAITING_RENEWAL_PAYMENT')
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 ```
 
 ---
@@ -249,7 +251,7 @@ WHERE Op != 'D'
 SELECT id, display_id, user_id, tenure_end_date, charged_till_date
 FROM furlenco_silver.order_management_systems_evolve.items
 WHERE Op != 'D'
-  AND state = 'ACTIVE'
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
   AND tenure_end_date BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE, 30)
 ORDER BY tenure_end_date
 LIMIT 500
@@ -377,7 +379,8 @@ SELECT
   END AS bucket,
   COUNT(*) AS cnt
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE Op != 'D'
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 GROUP BY 1
 ORDER BY 1
 ```
@@ -413,12 +416,14 @@ WHERE Op != 'D' AND order_id = [order_id from step 1];
 ```sql
 SELECT vertical, 'item' as type, COUNT(*) as active_count
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE Op != 'D'
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 GROUP BY vertical
 UNION ALL
 SELECT vertical, 'attachment', COUNT(*)
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE Op != 'D'
+  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 GROUP BY vertical
 ORDER BY vertical, type
 ```
