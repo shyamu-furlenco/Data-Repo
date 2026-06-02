@@ -9,7 +9,7 @@ refresh_cadence: continuous (CDC)
 
 ## Description
 
-One record per product (item) within an order. This is the primary table for questions about individual rented or purchased products — delivery dates, pickup dates, tenure, pricing, and lifecycle state. Join to `orders` via `order_id` for order-level context. `attachments` are tracked in a separate table.
+One record per product (item) within an order. This is the primary table for questions about individual rented or purchased products — delivery dates, pickup dates, tenure, pricing, and lifecycle state. Join to `orders` via `order_id` for order-level context. `attachments` are tracked in a separate table using `composite_item_id`.
 
 ## State values
 
@@ -41,6 +41,7 @@ One record per product (item) within an order. This is the primary table for que
 | `MISSING_AT_CUSTOMER` | Item reported lost/missing at customer location |
 | `SERVICE_ACTIVITY_IN_PROGRESS` | Active repair or service visit in progress |
 | `RETURN_AND_RENT_TO_PURCHASE_IN_PROGRESS` | Simultaneous return + rent-to-purchase conversion |
+| `NULL` | Sentinel/unset state — edge case, not expected in production data |
 
 ## Acquisition types
 
@@ -51,18 +52,23 @@ One record per product (item) within an order. This is the primary table for que
 
 ## State groupings
 
-Named groupings used in business logic:
+Named groupings used in business logic (sourced from named constants in `ItemState.java`):
 
-| Group | States |
-|-------|--------|
-| Pre-delivery | `CREATED`, `AWAITING_STOCK`, `DELIVERY_TO_BE_SCHEDULED`, `DELIVERY_SCHEDULED`, `DELIVERY_IN_TRANSIT`, `OUT_FOR_DELIVERY` |
-| Cancellable | `CREATED`, `AWAITING_STOCK`, `DELIVERY_TO_BE_SCHEDULED`, `DELIVERY_SCHEDULED` |
-| Fulfilled | `DELIVERED`, `INSTALLED` |
-| Returnable | `ACTIVE`, `RENEWAL_OVERDUE` |
-| Swap-eligible | `ACTIVE`, `PICKUP_TO_BE_SCHEDULED`, `PICKUP_SCHEDULED`, `RENEWAL_OVERDUE` |
-| Renewal-eligible | `ACTIVE`, `RENEWAL_OVERDUE`, `REPLACEMENT_IN_PROGRESS`, `SERVICE_ACTIVITY_IN_PROGRESS`, `AWAITING_RENEWAL_PAYMENT` |
-| Rent-to-purchase eligible | `ACTIVE`, `RENEWAL_OVERDUE` |
-| Terminal | `PICKED_UP`, `CANCELLED`, `PURCHASED`, `MISSING_AT_CUSTOMER` |
+| Group | Enum constant | States |
+|-------|--------------|--------|
+| Pre-delivery | `PRE_DELIVERY_STATES` | `CREATED`, `AWAITING_STOCK`, `DELIVERY_SCHEDULED`, `DELIVERY_TO_BE_SCHEDULED`, `DELIVERY_IN_TRANSIT`, `OUT_FOR_DELIVERY` |
+| Pre-fulfillment | `PRE_FULFILLMENT_STATES` | `CREATED`, `AWAITING_STOCK`, `DELIVERY_TO_BE_SCHEDULED`, `DELIVERY_SCHEDULED`, `DELIVERY_IN_TRANSIT`, `OUT_FOR_DELIVERY`, `INSTALLATION_IN_PROGRESS` |
+| Cancellable | `CANCELLABLE_STATES` | `CREATED`, `AWAITING_STOCK`, `DELIVERY_SCHEDULED`, `DELIVERY_TO_BE_SCHEDULED` |
+| Fulfilled | `FULFILLED_STATES` | `DELIVERED`, `INSTALLED` |
+| Active (on rent) | `ACTIVE_STATES` | `ACTIVE`, `SERVICE_ACTIVITY_IN_PROGRESS` |
+| Returnable | `RETURNABLE_STATES` | `ACTIVE`, `RENEWAL_OVERDUE` |
+| Pre-pickup | `PRE_PICKUP_STATES` | `PICKUP_TO_BE_SCHEDULED`, `PICKUP_SCHEDULED`, `OUT_FOR_PICKUP` |
+| Swap-eligible | `SWAP_ELIGIBLE_STATES` | `ACTIVE`, `PICKUP_TO_BE_SCHEDULED`, `PICKUP_SCHEDULED`, `RENEWAL_OVERDUE` |
+| Renewal-eligible | `STATES_ELIGIBLE_FOR_RENEWAL` | `ACTIVE`, `RENEWAL_OVERDUE`, `REPLACEMENT_IN_PROGRESS`, `SERVICE_ACTIVITY_IN_PROGRESS`, `AWAITING_RENEWAL_PAYMENT` |
+| Rent-to-purchase eligible | `RTO_ELIGIBLE_STATES` | `ACTIVE`, `RENEWAL_OVERDUE` |
+| Purchasable | `PURCHASABLE_STATES` | `ACTIVE`, `PICKUP_TO_BE_SCHEDULED`, `PICKUP_SCHEDULED`, `RENEWAL_OVERDUE` |
+| Replacement-eligible | `ELIGIBLE_FOR_REPLACEMENT_STATES` | `ACTIVE`, `RENEWAL_OVERDUE`, `DELIVERED` |
+| Terminal | `TERMINAL_STATES` | `PICKED_UP`, `CANCELLED`, `PURCHASED`, `MISSING_AT_CUSTOMER` |
 
 ## Line of product
 
@@ -79,8 +85,8 @@ Named groupings used in business logic:
 |--------|------|-------------|---------|----------|
 | id | bigint | Primary key | `987` | No |
 | name | string | Product name | `"3-Seater Sofa"` | No |
-| display_id | string | Human-readable item ID | `"ITM-2025-00123"` | No |
-| order_id | bigint | FK → orders.id | `987` | No |
+| display_id | string | Human-readable item ID shown to customers. Format: `ITM` prefix + 10-digit hash. Globally unique. | `"ITM12345678901"` | No |
+| order_id | bigint | FK → orders.id; join to `orders` for order-level context (payment, address, channel) | `987` | No |
 | state | string | Item lifecycle state (see State values above) | `"ACTIVE"` | No |
 | vertical | string | FURLENCO_RENTAL, UNLMTD, FURLENCO_SALE, PRAVA | `"FURLENCO_RENTAL"` | No |
 | user_id | bigint | Customer | `987` | No |
@@ -96,8 +102,8 @@ Named groupings used in business logic:
 | product_group_id | bigint | Product group | `42` | Yes |
 | seller_identifier | string | Seller/vendor identifier; `"HOK"` for in-house, otherwise marketplace | `"HOK"` | No |
 | seller_details | variant | Seller information JSON | `{...}` | Yes |
-| delivery_address_id | bigint | Current delivery address | `987` | No |
-| snapshotted_delivery_address_id | bigint | Delivery address locked at order time | `987` | No |
+| delivery_address_id | bigint | Current delivery address; join to `snapshotted_addresses` on this id for full address details | `987` | No |
+| snapshotted_delivery_address_id | bigint | Delivery address locked at order time; join to `snapshotted_addresses` on this id for full address details | `987` | No |
 | image_url_snapshot | string | Product image URL at order time | `"https://cdn.furlenco.com/..."` | No |
 | delivery_date | date | Scheduled/actual delivery date | `2025-03-15` | Yes |
 | pickup_date | date | Scheduled/actual pickup date | `2025-03-15` | Yes |
@@ -174,10 +180,10 @@ Named groupings used in business logic:
 | user_details_name | variant | Flattened: customer name at order time | `"Jane Doe"` | Yes |
 | user_details_contactno | variant | Flattened: customer contact number | `"+91XXXXXXXXXX"` | Yes |
 | user_details_emailid | variant | Flattened: customer email | `"x@y.com"` | Yes |
-| user_details_displayid | variant | Flattened: customer display ID | `"USR-001"` | Yes |
-| created_at | timestamp | Record creation time | `2025-03-15T10:30:00Z` | No |
-| updated_at | timestamp | Last update time | `2025-03-15T10:30:00Z` | No |
-| cdc_at | string | CDC capture timestamp | `"2025-03-15T11:00:00.123Z"` | No |
+| user_details_displayid | variant | Flattened: customer display ID (fur_id) | `"FUR12345678910"` | Yes |
+| created_at | timestamp | Record creation time (stored in UTC — convert to IST for display: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`) | `2025-03-15T10:30:00Z` | No |
+| updated_at | timestamp | Last update time (stored in UTC) | `2025-03-15T10:30:00Z` | No |
+| cdc_at | string | CDC event capture timestamp | `"2025-03-15T11:00:00.123Z"` | No |
 | Op | string | CDC operation: I=Insert, U=Update, D=Delete | `"I"` | No |
 | ingestion_timestamp | timestamp | When record arrived in Databricks | `2025-03-15T11:00:05Z` | No |
 
@@ -223,14 +229,61 @@ WHERE Op != 'D'
 GROUP BY state ORDER BY cnt DESC
 ```
 
+## Renewal column updates
+
+When a customer renews, items go through two phases. These are the columns that change:
+
+### Phase 1 — Renewal initiated (pending renewal created)
+
+| Column | Change |
+|--------|--------|
+| `renewal_pricing_details` | Set to the pricing for the upcoming renewal |
+| `renewal_payment_details` | Set to the payment details for the upcoming renewal |
+| `renewal_offers_snapshot` | Set to the offers applied to the upcoming renewal |
+
+### Phase 2 — Renewal applied (payment confirmed)
+
+| Column | Change |
+|--------|--------|
+| `tenure_start_date` | Updated to the new tenure start date |
+| `tenure_end_date` | Updated to the new tenure end date |
+| `charged_till_date` | Set to = new `tenure_end_date` |
+| `tenure_in_months` | Updated to the renewed tenure length |
+| `pricing_details` | Overwritten with the renewal pricing (copied from `renewal_pricing_details`) |
+| `current_pricing_details` | Overwritten with the renewal pricing |
+| `payment_details` | Overwritten with the renewal payment (copied from `renewal_payment_details`) |
+| `offers_snapshot` | Overwritten with the renewal offers (copied from `renewal_offers_snapshot`) |
+| `renewal_pricing_details` | Reset to **null** |
+| `renewal_payment_details` | Reset to **null** |
+| `renewal_offers_snapshot` | Reset to **null** |
+| `renewal_overdue_cycle_start_date` | Reset to **null** |
+| `renewal_overdue_cycle_end_date` | Reset to **null** |
+| `cancellation_refund_policy` | Reset to the default policy |
+| `damage_waiver_policy` | Reset to the default policy |
+| `months_since_renewal_overdue` | Auto-recalculated to `0` (JPA listener fires on every save) |
+| `currently_npa` | Auto-recalculated — flips to `false` once overdue months drop below NPA threshold |
+| `updated_at` | Auto-updated by `@UpdateTimestamp` |
+
+### When item enters RENEWAL_OVERDUE (each monthly cycle)
+
+| Column | Change |
+|--------|--------|
+| `renewal_overdue_cycle_start_date` | Set to previous cycle end + 1 day |
+| `renewal_overdue_cycle_end_date` | Set to new cycle start + 1 month − 1 day |
+| `months_since_renewal_overdue` | Incremented (auto-calculated from `tenure_end_date` → `renewal_overdue_cycle_end_date`) |
+| `currently_npa` | May flip to `true` if `months_since_renewal_overdue` exceeds the NPA threshold |
+
 ## Caveats
 
 - Always filter `Op != 'D'` — without this, deleted CDC records inflate counts.
+- All timestamp columns (`created_at`, `updated_at`) are stored in UTC. Convert to IST (UTC+5:30) for any user-facing date/time output or when filtering by business date: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`.
 - `tenure_end_date` can be null for open-ended subscriptions — don't assume it's always set.
 - `charged_till_date` is separate from `tenure_end_date`; use `charged_till_date` for billing questions.
 - Boolean-named columns (`is_autopay_enabled`, `manually_marked_as_npa`, `currently_npa`, `marked_as_rent_to_purchase_eligible`, `is_migrated_for_evolve`) store literal strings `'true'`/`'false'`. Compare with strings: `WHERE is_autopay_enabled = 'true'`, NOT `= true`.
+- **`state = 'ACTIVE'` is not the same as "currently on rent."** Items under an active service visit have state `SERVICE_ACTIVITY_IN_PROGRESS`, not `ACTIVE`. For "currently in use" counts use `state IN ('ACTIVE', 'SERVICE_ACTIVITY_IN_PROGRESS')` (the `ACTIVE_STATES` grouping).
 - **NPA columns are nullable.** `currently_npa` and `manually_marked_as_npa` are NULL in ~57% of rows (1.55M of 2.72M items). `WHERE currently_npa = 'true'` is safe (NULL excluded). `WHERE currently_npa != 'true'` will SILENTLY drop NULL rows — use `WHERE currently_npa IS NULL OR currently_npa != 'true'` if you mean "not flagged."
 - **Renewal-cycle variant columns are nullable until the cycle starts.** `renewal_pricing_details`, `renewal_payment_details`, `renewal_offers_snapshot` are NULL for ~99% of items (only populated when item nears renewal).
 - Many variant columns have flattened equivalents (lowercase, no camelCase). Prefer flattened columns for filters/aggregates and `CAST(... AS DECIMAL(18,2))` for math — e.g. `CAST(pricing_details_baseprice AS DECIMAL(18,2))` or `CAST(payment_details_payable:total AS DECIMAL(18,2))`.
 - `payment_details_payable` is a JSON object (variant), not a decimal — its `total` key holds the number.
 - `_rescued_data` is an Auto Loader system column for malformed rows — ignore for analytics.
+- **Unique constraints:** `display_id` is globally unique — safe to use as a human-readable lookup key.
