@@ -44,7 +44,7 @@ These named groupings are used in business logic — useful to know when filteri
 | state | string | Order lifecycle state (see State values above) | `"FULFILLED"` | No |
 | vertical | string | Business vertical: FURLENCO_RENTAL, UNLMTD, FURLENCO_SALE, PRAVA | `"FURLENCO_RENTAL"` | No |
 | user_id | bigint | Customer identifier | `987654` | No |
-| plan_id | bigint | Subscription plan reference | `42` | Yes |
+| plan_id | bigint | Subscription plan reference. A single plan can have multiple orders (e.g. UNLMTD swap/upsell orders under the same plan). Only the first order in a plan has `payment_details` populated — subsequent orders under the same plan have empty payment details because the customer already paid at plan creation. | `42` | Yes |
 | cart_id | bigint | Source cart | `55512` | No |
 | cart_checkout_id | bigint | Checkout session reference | `7788` | Yes |
 | placed_by | string | Who placed the order | `"customer"` | No |
@@ -55,7 +55,7 @@ These named groupings are used in business logic — useful to know when filteri
 | is_opted_for_early_fulfillment | string | Customer opted for early delivery | `"false"` | No |
 | snapshotted_delivery_address_id | bigint | Delivery address locked at order time | `11223` | No |
 | snapshotted_billing_address_id | bigint | Billing address locked at order time | `11224` | No |
-| payment_details | variant | Full payment JSON — use flattened columns for simple queries | `{...}` | Yes |
+| payment_details | variant | Full payment JSON — use flattened columns for simple queries. Empty (`{}`) for subsequent orders under a plan (see `plan_id`). | `{...}` | Yes |
 | payment_details_payable | variant | JSON object with keys `total`, `byCashPostTax`, `byCashPreTax`, `tax`. For the order total, use `CAST(payment_details_payable:total AS DECIMAL(18,2))`. | `{"total":"5268.04",...}` | Yes |
 | offers_snapshot | variant | Offers applied at order time | `[...]` | No |
 | logistics_attributes_snapshot | variant | Logistics metadata | `{...}` | No |
@@ -134,4 +134,5 @@ LIMIT 20
 - `payment_details_payable` is a JSON object (not a decimal). For the order total: `CAST(payment_details_payable:total AS DECIMAL(18,2))`.
 - Boolean-named columns (`is_upsell`, `is_sfd_selected`, `is_opted_for_early_fulfillment`, `is_migrated_for_evolve`) store literal strings `'true'`/`'false'`. Compare with strings: `WHERE is_sfd_selected = 'true'`, NOT `= true`.
 - `state` is set at the order level; individual item progress is tracked in the `items` table.
+- **Plan multi-order pattern (UNLMTD):** A plan can have multiple orders sharing the same `plan_id`. Only the first order has `payment_details` populated — the service enforces this: subsequent orders are only allowed after the originating order is paid, and their `payment_details` is stored as `{}`. When querying payment amounts, filter to the first order per plan (`plan_id IS NULL OR <join to plans and filter originating_order_id>`), otherwise empty `payment_details` will return nulls or zeros.
 - `_rescued_data` is an Auto Loader system column for malformed rows — ignore for analytics.
