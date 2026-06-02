@@ -41,21 +41,21 @@ These named groupings are used in business logic — useful to know when filteri
 | Column | Type | Description | Example | Nullable |
 |--------|------|-------------|---------|----------|
 | id | bigint | Primary key | `123456` | No |
-| display_id | string | Human-readable order ID shown to customers | `"ORD-2025-001234"` | No |
+| display_id | string | Human-readable order ID shown to customers. Format: `ORD` prefix + 10-digit hash (e.g. `ORD12345678901`). | `"ORD12345678901"` | No |
 | state | string | Order lifecycle state (see State values above) | `"FULFILLED"` | No |
 | vertical | string | Business vertical: FURLENCO_RENTAL, UNLMTD, FURLENCO_SALE, PRAVA | `"FURLENCO_RENTAL"` | No |
 | user_id | bigint | Customer identifier | `987654` | No |
 | plan_id | bigint | Subscription plan reference. A single plan can have multiple orders (e.g. UNLMTD swap/upsell orders under the same plan). Only the first order in a plan has `payment_details` populated — subsequent orders under the same plan have empty payment details because the customer already paid at plan creation. | `42` | Yes |
 | cart_id | bigint | Source cart | `55512` | No |
 | cart_checkout_id | bigint | Checkout session reference | `7788` | Yes |
-| placed_by | string | Who placed the order | `"customer"` | No |
+| placed_by | string | Email of the person who placed the order (internal ops/sales email, or customer email for self-service) | `"akshat.k@furlenco.com"` | No |
 | source | string | App platform: ANDROID, IOS, MWEB, WEB, OFFLINE_STORE, EVOLVE_MIGRATION, SYSTEM_TRIGGERED | `"ANDROID"` | No |
 | channel | string | Sales channel: CUSTOMER, CHANNEL_SALES_NOBROKER, DUKAAN_INTERNAL, DUKAAN_EXTERNAL, EXTERNAL_SALE_AMAZON, INSIDE_SALES, RETENTION_SWAP, RETENTION_RELOCATION, SFL_DEALER | `"CUSTOMER"` | No |
 | is_upsell | string | Whether this is an upsell order | `"false"` | No |
 | is_sfd_selected | string | Whether scheduled first delivery was selected | `"true"` | No |
 | is_opted_for_early_fulfillment | string | Customer opted for early delivery | `"false"` | No |
 | snapshotted_delivery_address_id | bigint | Delivery address locked at order time — join to `snapshotted_addresses` on this id to find full address info | `11223` | No |
-| snapshotted_billing_address_id | bigint | Billing address locked at order time | `11224` | No |
+| snapshotted_billing_address_id | bigint | Billing address locked at order time — join to `snapshotted_addresses` on this id to find full billing address info | `11224` | No |
 | payment_details | variant | Full payment JSON — use flattened columns for simple queries. Empty (`{}`) for subsequent orders under a plan (see `plan_id`). | `{...}` | Yes |
 | payment_details_payable | variant | JSON object with keys `total`, `byCashPostTax`, `byCashPreTax`, `tax`. For the order total, use `CAST(payment_details_payable:total AS DECIMAL(18,2))`. | `{"total":"5268.04",...}` | Yes |
 | offers_snapshot | variant | Offers applied at order time | `[...]` | No |
