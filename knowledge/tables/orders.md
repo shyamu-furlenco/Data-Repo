@@ -117,9 +117,20 @@ ORDER BY cnt DESC
 LIMIT 20
 ```
 
+**Orders by state/city:**
+```sql
+
+SELECT state, city, COUNT(*) as cnt
+FROM furlenco_silver.order_management_systems_evolve.orders as ord 
+LEFT JOIN furlenco_silver.order_management_systems_evolve.Snapshotted_Addresses as sa
+ON ord.snapshotted_delivery_address_Id = sa.id
+GROUP BY state, city
+ORDER BY cnt DESC
+LIMIT 20
+```
+
 ## Caveats
 
-- Always filter `Op != 'D'` — without this, cancelled/replaced CDC records inflate counts.
 - `payment_details_payable` is a JSON object (not a decimal). For the order total: `CAST(payment_details_payable:total AS DECIMAL(18,2))`.
 - Boolean-named columns (`is_upsell`, `is_sfd_selected`, `is_opted_for_early_fulfillment`, `is_migrated_for_evolve`) store literal strings `'true'`/`'false'`. Compare with strings: `WHERE is_sfd_selected = 'true'`, NOT `= true`.
 - `state` is set at the order level; individual item progress is tracked in the `items` table.
