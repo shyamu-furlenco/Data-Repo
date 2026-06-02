@@ -38,7 +38,7 @@ One record per product (item) within an order. This is the primary table for que
 | `CREATED` | Record created, not yet acted upon |
 | `INSTALLED` | Product installed (appliances) |
 | `INSTALLATION_IN_PROGRESS` | Installation underway |
-| `MISSING_AT_CUSTOMER` | Item reported lost/missing at customer location |
+| `MISSING_AT_CUSTOMER` | Item reported lost/missing at customer location. Terminal. Set via manual/admin operation — no automated event handler transitions items into this state. Not applicable to `FURLENCO_SALE` vertical (DB constraint blocks it). |
 | `SERVICE_ACTIVITY_IN_PROGRESS` | Active repair or service visit in progress |
 | `RETURN_AND_RENT_TO_PURCHASE_IN_PROGRESS` | Simultaneous return + rent-to-purchase conversion |
 | `NULL` | Sentinel/unset state — edge case, not expected in production data |
