@@ -4,19 +4,18 @@
 
 layer: Silver (CDC)
 full_path: furlenco_silver.order_management_systems_evolve.orders
-row_count_approx: 843,903
 refresh_cadence: continuous (CDC)
 
 ## Description
 
-One record per customer order. An order is the top-level container — it holds the overall payment, address, and channel context. Individual rented/purchased products are in the `items` and `attachments` tables, linked via `order_id`.
+One record per customer order. An order is the top-level container — it holds the overall payment, address , and channel context. Individual rented/purchased products are in the `items` and `attachments` tables, linked via `order_id`.
 
 ## State values
 
 | State | Meaning |
 |-------|---------|
-| `FULFILLED` | Order completed and products delivered (~72% of orders) |
-| `CANCELLED` | Order cancelled before or during fulfilment (~28%) |
+| `FULFILLED` | Order completed and products delivered |
+| `CANCELLED` | Order cancelled before or during fulfilment |
 | `TO_BE_FULFILLED` | Order placed, pending fulfilment |
 | `FULFILLMENT_IN_PROGRESS` | Actively being processed |
 | `AWAITING_KYC_APPROVAL` | Blocked on customer KYC |
@@ -121,7 +120,6 @@ LIMIT 20
 ## Caveats
 
 - Always filter `Op != 'D'` — without this, cancelled/replaced CDC records inflate counts.
-- All timestamp columns (`created_at`, `updated_at`, `sfd_captured_at`) are stored in UTC. Convert to IST (UTC+5:30) for any user-facing date/time output or when filtering by business date: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`.
 - `payment_details_payable` is a JSON object (not a decimal). For the order total: `CAST(payment_details_payable:total AS DECIMAL(18,2))`.
 - Boolean-named columns (`is_upsell`, `is_sfd_selected`, `is_opted_for_early_fulfillment`, `is_migrated_for_evolve`) store literal strings `'true'`/`'false'`. Compare with strings: `WHERE is_sfd_selected = 'true'`, NOT `= true`.
 - `state` is set at the order level; individual item progress is tracked in the `items` table.
