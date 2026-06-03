@@ -175,14 +175,14 @@ WHERE Op != 'D'
   AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE')
 ```
 
-**All attachments for a specific order:**
+**All attachments for a specific order which are not cancelled:**
 ```sql
 SELECT id, display_id, name, state, delivery_date, tenure_in_months
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D' AND order_id = [order_id]
+WHERE Op != 'D' AND order_id = [order_id] and state <> 'CANCELLED'
 ```
 
-**Attachments with tenure breakdown:**
+**Attachments with tenure breakdown which are active:**
 ```sql
 SELECT tenure_in_months, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.attachments

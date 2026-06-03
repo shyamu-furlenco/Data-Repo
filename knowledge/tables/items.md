@@ -191,7 +191,7 @@ Named groupings used in business logic (sourced from named constants in `ItemSta
 
 ## Common queries
 
-**Active items on rent:**
+**items with customers:**
 ```sql
 SELECT COUNT(*) as active_items
 FROM furlenco_silver.order_management_systems_evolve.items
