@@ -237,6 +237,14 @@ SELECT id, name, state, created_at
 FROM furlenco_silver.order_management_systems_evolve.items
 WHERE state <> 'CANCELLED'
 ```
+**List of Items from UNLMTD:**
+```sql 
+SELECT id, name, state, created_at, plan_id
+FROM furlenco_silver.order_management_systems_evolve.items
+WHERE state <> 'CANCELLED'
+AND vertical = 'UNLMTD'
+```
+
 
 ## Renewal column updates
 
