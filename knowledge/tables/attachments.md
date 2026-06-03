@@ -17,7 +17,7 @@ One record per add-on product linked to an order. Attachments always belong to a
 
 | State | Meaning |
 |-------|---------|
-| `PICKED_UP` | Picked up — subscription ended (~45%) |
+| `PICKED_UP` | Terminal. Physical return logistics complete — attachment collected from customer, `pickup_date` set, all VAS expired (~45%). Ends this attachment's lifecycle only; the parent item may still be active (22 known state-mismatch cases, tracked in `#sms_alerts_new`). |
 | `CANCELLED` | Cancelled before delivery (~33%) |
 | `ACTIVE` | On rent with customer (~16%) |
 | `RENEWAL_OVERDUE` | Tenure ended, renewal pending (~4%) |
@@ -257,3 +257,4 @@ When a customer renews, attachments go through two phases. These are the columns
 - Many variant columns have flattened equivalents (lowercase, no camelCase). Prefer flattened columns for filters/aggregates and `CAST(... AS DECIMAL(18,2))` for math.
 - `_rescued_data` is an Auto Loader system column for malformed rows — ignore for analytics.
 - `acquisition_type` is always `RENT` — PURCHASE type is not used for attachments. `vertical` is always `FURLENCO_RENTAL` or `UNLMTD` — no FURLENCO_SALE or PRAVA for attachments.
+- **`PICKED_UP` does not mean the parent subscription has ended.** It means the attachment was physically collected by logistics (`pickup_date` set, VAS expired) — the parent item may still be `RENEWAL_OVERDUE` or `PICKUP_TO_BE_SCHEDULED`. Always check the item's state via `composite_item_id` if you need to determine whether the full order is returned. 22 live rows show this mismatch; tracked by engineering in `#sms_alerts_new` (Metabase dashboard #11637).
