@@ -16,7 +16,7 @@ One record per product (item) within an order. This is the primary table for que
 | State | Meaning |
 |-------|---------|
 | `ACTIVE` | Currently on rent with the customer (~23%) |
-| `PICKED_UP` | Product picked up — subscription ended (~41%) |
+| `PICKED_UP` | Terminal. Physical return logistics complete — Item collected from customer,  `pickup_date`   set, all VAS expired (~45%). Ends this items's lifecycle |
 | `CANCELLED` | Item cancelled before delivery (~29%) |
 | `RENEWAL_OVERDUE` | Tenure ended, renewal payment pending (~4%) |
 | `PURCHASED` | Customer exercised rent-to-buy (~1%) |
