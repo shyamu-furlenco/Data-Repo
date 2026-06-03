@@ -195,16 +195,14 @@ Named groupings used in business logic (sourced from named constants in `ItemSta
 ```sql
 SELECT COUNT(*) as active_items
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D'
-  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
+WHERE state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE', 'SERVICE_ACTIVITY_IN_PROGRESS')
 ```
 
 **Items delivered today:**
 ```sql
 SELECT id, display_id, name, state, user_id
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D'
-  AND delivery_date = CURRENT_DATE
+WHERE delivery_date = CURRENT_DATE
 LIMIT 500
 ```
 
@@ -212,8 +210,7 @@ LIMIT 500
 ```sql
 SELECT id, display_id, name, state, pickup_date
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D'
-  AND pickup_date BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE, 7)
+WHERE pickup_date BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE, 7)
 LIMIT 500
 ```
 
@@ -221,14 +218,13 @@ LIMIT 500
 ```sql
 SELECT id, display_id, name, state, delivery_date, tenure_start_date, tenure_end_date
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D' AND order_id = [order_id]
+WHERE order_id = [order_id]
 ```
 
 **Items by state breakdown:**
 ```sql
 SELECT state, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.items
-WHERE Op != 'D'
 GROUP BY state ORDER BY cnt DESC
 ```
 **List of Items:**
@@ -292,7 +288,6 @@ When a customer renews, items go through two phases. These are the columns that 
 
 ## Caveats
 
-- Always filter `Op != 'D'` — without this, deleted CDC records inflate counts.
 - All timestamp columns (`created_at`, `updated_at`) are stored in UTC. Convert to IST (UTC+5:30) for any user-facing date/time output or when filtering by business date: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`.
 - `tenure_end_date` can be null for open-ended subscriptions — don't assume it's always set.
 - `charged_till_date` is separate from `tenure_end_date`; use `charged_till_date` for billing questions.

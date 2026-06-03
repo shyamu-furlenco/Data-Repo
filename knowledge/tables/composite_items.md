@@ -122,7 +122,7 @@ Composite items use a higher-level lifecycle than individual `items` / `attachme
 ```sql
 SELECT id, name, state, tenure_start_date, tenure_end_date
 FROM furlenco_silver.order_management_systems_evolve.composite_items
-WHERE Op != 'D' AND order_id = [order_id]
+WHERE order_id = [order_id]
 ```
 
 **Full composite item breakdown — item + attachments grouped together:**
@@ -130,31 +130,30 @@ WHERE Op != 'D' AND order_id = [order_id]
 -- Get composite item
 SELECT ci.id as composite_item_id, ci.name as composite_name, ci.state as ci_state
 FROM furlenco_silver.order_management_systems_evolve.composite_items ci
-WHERE ci.Op != 'D' AND ci.order_id = [order_id];
+WHERE ci.order_id = [order_id];
 
 -- Get main item for each composite item
 SELECT i.id, i.display_id, i.name, i.state
 FROM furlenco_silver.order_management_systems_evolve.items i
-WHERE i.Op != 'D' AND i.composite_item_id = [composite_item_id];
+WHERE i.composite_item_id = [composite_item_id];
 
 -- Get attachments for each composite item
 SELECT a.id, a.display_id, a.name, a.state
 FROM furlenco_silver.order_management_systems_evolve.attachments a
-WHERE a.Op != 'D' AND a.composite_item_id = [composite_item_id];
+WHERE a.composite_item_id = [composite_item_id];
 ```
 
 **Active composite items by vertical** (note: the active state is `ACTIVATED`, not `ACTIVE`):
 ```sql
 SELECT vertical, COUNT(*) as active_count
 FROM furlenco_silver.order_management_systems_evolve.composite_items
-WHERE Op != 'D' AND state = 'ACTIVATED'
+WHERE state = 'ACTIVATED'
 GROUP BY vertical
 ORDER BY active_count DESC
 ```
 
 ## Caveats
 
-- Always filter `Op != 'D'` — without this, deleted CDC records inflate counts.
 - Every `attachment` has a `composite_item_id` — attachments are never standalone.
 - Not every `item` has a `composite_item_id` — standalone items (without accessories) do not belong to a composite item.
 - `tenure_end_date` can be null for open-ended subscriptions; use `tenure_in_months` as the authoritative duration.

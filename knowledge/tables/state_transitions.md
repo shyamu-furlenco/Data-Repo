@@ -90,8 +90,7 @@ This table covers all entity types (orders, plans, items, bundles, renewals, ret
 ```sql
 SELECT entity_id, from_state, to_state, created_at
 FROM furlenco_silver.order_management_systems_evolve.state_transitions
-WHERE Op != 'D'
-  AND entity_type = 'ORDER'
+WHERE entity_type = 'ORDER'
   AND entity_id = 123456
 ORDER BY created_at ASC
 ```
@@ -100,8 +99,7 @@ ORDER BY created_at ASC
 ```sql
 SELECT entity_id, MIN(created_at) AS fulfilled_at
 FROM furlenco_silver.order_management_systems_evolve.state_transitions
-WHERE Op != 'D'
-  AND entity_type = 'ORDER'
+WHERE entity_type = 'ORDER'
   AND to_state = 'FULFILLED'
 GROUP BY entity_id
 ```
@@ -111,13 +109,13 @@ GROUP BY entity_id
 WITH placed AS (
     SELECT entity_id, MIN(created_at) AS placed_at
     FROM furlenco_silver.order_management_systems_evolve.state_transitions
-    WHERE Op != 'D' AND entity_type = 'ORDER' AND from_state = 'NULL'
+    WHERE entity_type = 'ORDER' AND from_state = 'NULL'
     GROUP BY entity_id
 ),
 fulfilled AS (
     SELECT entity_id, MIN(created_at) AS fulfilled_at
     FROM furlenco_silver.order_management_systems_evolve.state_transitions
-    WHERE Op != 'D' AND entity_type = 'ORDER' AND to_state = 'FULFILLED'
+    WHERE entity_type = 'ORDER' AND to_state = 'FULFILLED'
     GROUP BY entity_id
 )
 SELECT
@@ -131,8 +129,7 @@ WHERE fulfilled_at >= DATEADD(DAY, -30, CURRENT_DATE)
 ```sql
 SELECT to_state, COUNT(DISTINCT entity_id) AS order_count
 FROM furlenco_silver.order_management_systems_evolve.state_transitions
-WHERE Op != 'D'
-  AND entity_type = 'ORDER'
+WHERE entity_type = 'ORDER'
   AND created_at >= DATEADD(DAY, -30, CURRENT_DATE)
 GROUP BY to_state
 ORDER BY order_count DESC
@@ -142,8 +139,7 @@ ORDER BY order_count DESC
 ```sql
 SELECT entity_id, from_state, created_at AS cancelled_at
 FROM furlenco_silver.order_management_systems_evolve.state_transitions
-WHERE Op != 'D'
-  AND entity_type = 'ORDER'
+WHERE entity_type = 'ORDER'
   AND to_state = 'CANCELLED'
   AND from_state IN ('AWAITING_PAYMENT', 'AWAITING_KYC_APPROVAL')
   AND created_at >= DATEADD(DAY, -30, CURRENT_DATE)
@@ -151,7 +147,6 @@ WHERE Op != 'D'
 
 ## Caveats
 
-- Always filter `Op != 'D'` — CDC delete records can appear for internal system corrections.
 - Always filter `entity_type` — the table covers all entity types and the index is on `(entity_type, published_at)`. Omitting `entity_type` causes a full table scan.
 - This is an append-only log — each row is one transition. An entity with 5 state changes has 5 rows. Never count rows as a proxy for entity count.
 - `published_at` is an internal column used by the reads processing pipeline. A `NULL` value means the transition hasn't been picked up by the downstream processor yet — it has no analytical meaning.

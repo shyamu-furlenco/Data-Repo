@@ -183,9 +183,7 @@ SELECT e.id AS event_id, e.name AS event_name, e.created_at
 FROM furlenco_silver.order_management_systems_evolve.state_transitions st
 JOIN furlenco_silver.order_management_systems_evolve.events e
   ON st.event_id = e.id
-WHERE st.Op != 'D'
-  AND e.Op != 'D'
-  AND st.id = <state_transition_id>
+WHERE st.id = <state_transition_id>
 ```
 
 **Full event history for a specific order (most recent first):**
@@ -194,9 +192,7 @@ SELECT e.id, e.name, e.created_at
 FROM furlenco_silver.order_management_systems_evolve.state_transitions st
 JOIN furlenco_silver.order_management_systems_evolve.events e
   ON st.event_id = e.id
-WHERE st.Op != 'D'
-  AND e.Op != 'D'
-  AND st.entity_type = 'ORDER'
+WHERE st.entity_type = 'ORDER'
   AND st.entity_id = <order_id>
 ORDER BY e.created_at DESC
 ```
@@ -207,9 +203,7 @@ SELECT e.id, e.name, e.created_at, e.data_cancelledby
 FROM furlenco_silver.order_management_systems_evolve.state_transitions st
 JOIN furlenco_silver.order_management_systems_evolve.events e
   ON st.event_id = e.id
-WHERE st.Op != 'D'
-  AND e.Op != 'D'
-  AND st.entity_type = 'ORDER'
+WHERE st.entity_type = 'ORDER'
   AND st.entity_id = <order_id>
   AND st.to_state = 'CANCELLED'
 ```
@@ -218,8 +212,7 @@ WHERE st.Op != 'D'
 ```sql
 SELECT name, COUNT(*) AS event_count
 FROM furlenco_silver.order_management_systems_evolve.events
-WHERE Op != 'D'
-  AND created_at >= DATEADD(DAY, -30, CURRENT_DATE)
+WHERE created_at >= DATEADD(DAY, -30, CURRENT_DATE)
 GROUP BY name
 ORDER BY event_count DESC
 ```
@@ -231,9 +224,7 @@ SELECT e.id AS event_id, e.name AS event_name, e.created_at,
 FROM furlenco_silver.order_management_systems_evolve.events e
 JOIN furlenco_silver.order_management_systems_evolve.side_effects se
   ON se.event_id = e.id
-WHERE e.Op != 'D'
-  AND se.Op != 'D'
-  AND se.state = 'FAILED'
+WHERE se.state = 'FAILED'
   AND se.name IN ('ORDER_FULFILLMENT_CREATION', 'RETURN_FULFILLMENT_CREATION',
                   'REPLACEMENT_FULFILLMENT_CREATION', 'SWAP_FULFILLMENT_CREATION')
   AND e.created_at >= DATEADD(DAY, -7, CURRENT_DATE)
@@ -254,7 +245,6 @@ Start RCA from the entity (e.g. order ID), trace through `state_transitions` to 
 
 ## Caveats
 
-- Always filter `Op != 'D'` — CDC delete records appear for internal corrections.
 - `name` is the most important filter — the table holds 130+ event types. Always filter by name when querying at scale.
 - The `data` column is a variant (JSONB). Use `data_*` flattened columns (e.g. `data_orderid`) rather than parsing `data` directly.
 - `created_at` is when the event was processed by the system, not necessarily when the customer action happened. For exact customer action time, check `state_transitions.snapshot`.

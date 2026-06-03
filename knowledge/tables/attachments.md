@@ -164,29 +164,28 @@ Note: `BUY_REFURBISHED` and `BUY_NEW` are not applicable to attachments.
 ```sql
 SELECT COUNT(*) as active_attachments
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE state = 'ACTIVE'
 ```
 
 **Attachments with customer (on rent):**
 ```sql
 SELECT COUNT(*) as with_customer
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D'
-  AND state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE')
+WHERE state IN ('ACTIVE', 'AWAITING_RENEWAL_PAYMENT', 'RENEWAL_OVERDUE')
 ```
 
 **All attachments for a specific order which are not cancelled:**
 ```sql
 SELECT id, display_id, name, state, delivery_date, tenure_in_months
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D' AND order_id = [order_id] and state <> 'CANCELLED'
+WHERE order_id = [order_id] and state <> 'CANCELLED'
 ```
 
 **Attachments with tenure breakdown which are active:**
 ```sql
 SELECT tenure_in_months, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D' AND state = 'ACTIVE'
+WHERE state = 'ACTIVE'
 GROUP BY tenure_in_months ORDER BY tenure_in_months
 ```
 
@@ -194,7 +193,6 @@ GROUP BY tenure_in_months ORDER BY tenure_in_months
 ```sql
 SELECT state, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.attachments
-WHERE Op != 'D'
 GROUP BY state ORDER BY cnt DESC
 ```
 
@@ -244,7 +242,6 @@ When a customer renews, attachments go through two phases. These are the columns
 
 ## Caveats
 
-- Always filter `Op != 'D'` — without this, deleted CDC records inflate counts.
 - All timestamp columns (`created_at`, `updated_at`) are stored in UTC. Convert to IST (UTC+5:30) for any user-facing date/time output or when filtering by business date: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`.
 - `tenure_in_months` is the authoritative tenure field. `tenure_end_date` is derived from it.
 - `charged_till_date` is the billing coverage end date; `tenure_end_date` is the contractual end.

@@ -94,8 +94,7 @@ These named groupings are used in business logic — useful to know when filteri
 ```sql
 SELECT COUNT(*) as order_count
 FROM furlenco_silver.order_management_systems_evolve.orders
-WHERE Op != 'D'
-  AND CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at) >= DATE_TRUNC('month', CURRENT_DATE)
+WHERE CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at) >= DATE_TRUNC('month', CURRENT_DATE)
   AND state <> 'CANCELLED'
 ```
 
@@ -103,7 +102,6 @@ WHERE Op != 'D'
 ```sql
 SELECT vertical, state, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.orders
-WHERE Op != 'D'
 AND state <> 'CANCELLED'
 GROUP BY vertical, state
 ORDER BY cnt DESC
@@ -114,7 +112,6 @@ LIMIT 30
 ```sql
 SELECT source, channel, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.orders
-WHERE Op != 'D'
 AND state <> 'CANCELLED'
 GROUP BY source, channel
 ORDER BY cnt DESC
@@ -127,9 +124,7 @@ SELECT sa.state, sa.city, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.orders AS ord
 LEFT JOIN furlenco_silver.order_management_systems_evolve.snapshotted_addresses AS sa
   ON ord.snapshotted_delivery_address_id = sa.id
-WHERE ord.Op != 'D'
-  AND sa.Op != 'D'
-  AND state <> 'CANCELLED'
+WHERE state <> 'CANCELLED'
 GROUP BY sa.state, sa.city
 ORDER BY cnt DESC
 LIMIT 20
@@ -137,7 +132,6 @@ LIMIT 20
 
 ## Caveats
 
-- Always filter `Op != 'D'` — without this, cancelled/replaced CDC records inflate counts.
 - All timestamp columns (`created_at`, `updated_at`, `sfd_captured_at`) are stored in UTC. Convert to IST (UTC+5:30) for any user-facing date/time output or when filtering by business date: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at)`.
 - `payment_details_payable` is a JSON object (not a decimal). For the order total: `CAST(payment_details_payable:total AS DECIMAL(18,2))`.
 - Boolean-named columns (`is_upsell`, `is_sfd_selected`, `is_opted_for_early_fulfillment`, `is_migrated_for_evolve`) store literal strings `'true'`/`'false'`. Compare with strings: `WHERE is_sfd_selected = 'true'`, NOT `= true`.

@@ -182,9 +182,7 @@ SELECT se.name, se.state, se.created_at, se.updated_at,
 FROM furlenco_silver.order_management_systems_evolve.state_transitions st
 JOIN furlenco_silver.order_management_systems_evolve.side_effects se
   ON se.state_transition_id = st.id
-WHERE st.Op != 'D'
-  AND se.Op != 'D'
-  AND st.entity_type = 'ORDER'
+WHERE st.entity_type = 'ORDER'
   AND st.entity_id = <order_id>
 ORDER BY se.created_at ASC
 ```
@@ -195,9 +193,7 @@ SELECT se.id, se.name, se.state, se.error_details, se.created_at, se.updated_at
 FROM furlenco_silver.order_management_systems_evolve.state_transitions st
 JOIN furlenco_silver.order_management_systems_evolve.side_effects se
   ON se.state_transition_id = st.id
-WHERE st.Op != 'D'
-  AND se.Op != 'D'
-  AND st.entity_type = 'ORDER'
+WHERE st.entity_type = 'ORDER'
   AND st.entity_id = <order_id>
   AND se.name = 'ORDER_FULFILLMENT_CREATION'
 ```
@@ -207,8 +203,7 @@ WHERE st.Op != 'D'
 SELECT name, COUNT(*) AS failure_count,
        MIN(created_at) AS first_failure, MAX(created_at) AS last_failure
 FROM furlenco_silver.order_management_systems_evolve.side_effects
-WHERE Op != 'D'
-  AND state = 'FAILED'
+WHERE state = 'FAILED'
   AND created_at >= DATEADD(HOUR, -24, CURRENT_TIMESTAMP)
 GROUP BY name
 ORDER BY failure_count DESC
@@ -219,8 +214,7 @@ ORDER BY failure_count DESC
 SELECT id, name, state, created_at, updated_at,
        DATEDIFF(MINUTE, created_at, CURRENT_TIMESTAMP) AS minutes_stuck
 FROM furlenco_silver.order_management_systems_evolve.side_effects
-WHERE Op != 'D'
-  AND state IN ('PENDING', 'WAITING_ON_DEPENDENCY')
+WHERE state IN ('PENDING', 'WAITING_ON_DEPENDENCY')
   AND created_at <= DATEADD(HOUR, -2, CURRENT_TIMESTAMP)
 ORDER BY created_at ASC
 LIMIT 100
@@ -242,10 +236,7 @@ JOIN furlenco_silver.order_management_systems_evolve.state_transitions st
   ON st.event_id = e.id
 JOIN furlenco_silver.order_management_systems_evolve.side_effects se
   ON se.event_id = e.id
-WHERE e.Op != 'D'
-  AND st.Op != 'D'
-  AND se.Op != 'D'
-  AND st.entity_type = 'ORDER'
+WHERE st.entity_type = 'ORDER'
   AND st.entity_id = <order_id>
 ORDER BY e.created_at ASC, se.name ASC
 ```
@@ -260,8 +251,7 @@ SELECT
   SUM(CASE WHEN state = 'INVALID' THEN 1 ELSE 0 END) AS invalid,
   ROUND(100.0 * SUM(CASE WHEN state = 'PERFORMED' THEN 1 ELSE 0 END) / COUNT(*), 2) AS success_rate_pct
 FROM furlenco_silver.order_management_systems_evolve.side_effects
-WHERE Op != 'D'
-  AND name IN ('ORDER_FULFILLMENT_CREATION', 'RETURN_FULFILLMENT_CREATION',
+WHERE name IN ('ORDER_FULFILLMENT_CREATION', 'RETURN_FULFILLMENT_CREATION',
                'REPLACEMENT_FULFILLMENT_CREATION', 'SWAP_FULFILLMENT_CREATION',
                'UNLMTD_SWAP_FULFILLMENT_CREATION', 'PLAN_CANCELLATION_FULFILLMENT_CREATION')
   AND created_at >= DATEADD(DAY, -7, CURRENT_DATE)
@@ -287,7 +277,6 @@ Two ways to reach side effects:
 
 ## Caveats
 
-- Always filter `Op != 'D'`.
 - With 128M rows, always filter by `name` or `state` — never scan the full table without a predicate.
 - `input`, `output`, and `error_details` are stored as JSON strings. Use `get_json_object(error_details, '$.message')` to extract specific fields.
 - `FAILED` and `INVALID` are **terminal states** — these side effects will never self-heal. They require engineering action (manual republish or code fix).
