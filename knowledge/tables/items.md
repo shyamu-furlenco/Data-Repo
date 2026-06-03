@@ -107,8 +107,8 @@ Named groupings used in business logic (sourced from named constants in `ItemSta
 | delivery_address_id | bigint | Current delivery address; join to `snapshotted_addresses` on this id for full address details | `987` | No |
 | snapshotted_delivery_address_id | bigint | Delivery address locked at order time; join to `snapshotted_addresses` on this id for full address details | `987` | No |
 | image_url_snapshot | string | Product image URL at order time | `"https://cdn.furlenco.com/..."` | No |
-| delivery_date | date | Scheduled/actual delivery date | `2025-03-15` | Yes |
-| pickup_date | date | Scheduled/actual pickup date | `2025-03-15` | Yes |
+| delivery_date | date | actual delivery date | `2025-03-15` | Yes |
+| pickup_date | date | actual pickup date | `2025-03-15` | Yes |
 | tenure_start_date | date | Subscription start date | `2025-03-15` | Yes |
 | tenure_end_date | date | Subscription end date (null = open-ended) | `2025-03-15` | Yes |
 | charged_till_date | date | Billing coverage end date | `2025-03-15` | Yes |

@@ -83,8 +83,8 @@ Note: `BUY_REFURBISHED` and `BUY_NEW` are not applicable to attachments.
 | delivery_address_id | bigint | Current delivery address; join to `snapshotted_addresses` on this id for full address details | `987` | No |
 | snapshotted_delivery_address_id | bigint | Delivery address locked at order time; join to `snapshotted_addresses` on this id for full address details | `987` | No |
 | image_url_snapshot | string | Product image URL at order time | `"https://cdn.furlenco.com/..."` | No |
-| delivery_date | date | Scheduled/actual delivery date (~33% null — not set for cancelled items) | `2025-03-15` | Yes |
-| pickup_date | date | Scheduled/actual pickup date (~55% null — only set once pickup occurs or is scheduled) | `2025-03-15` | Yes |
+| delivery_date | date | actual delivery date (~33% null — not set for cancelled items) | `2025-03-15` | Yes |
+| pickup_date | date | actual pickup date (~55% null — only set once pickup occurs or is scheduled) | `2025-03-15` | Yes |
 | tenure_start_date | date | Subscription start date | `2025-03-15` | Yes |
 | tenure_end_date | date | Subscription end date (~33% null — null for cancelled items and open-ended subscriptions) | `2025-03-15` | Yes |
 | charged_till_date | date | Billing coverage end date | `2025-03-15` | Yes |
