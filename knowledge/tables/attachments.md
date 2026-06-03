@@ -19,7 +19,7 @@ One record per add-on product linked to an order. Attachments always belong to a
 |-------|---------|
 | `PICKED_UP` | Terminal. Physical return logistics complete — attachment collected from customer, `pickup_date` set, all VAS expired (~45%). Ends this attachment's lifecycle|
 | `CANCELLED` | Cancelled before delivery (~33%) |
-| `ACTIVE` | On rent with customer (~16%) |
+| `ACTIVE` | Attachment is physically with the customer and the subscription is running in good standing (~16%). `tenure_start_date`, `tenure_end_date`, `charged_till_date`, and `activation_date` are all set at this point; all VAS are activated. Reached from `DELIVERED → ACTIVE` (standard, no installation) or `INSTALLED → ACTIVE` (installation required). Also re-entered from `REPLACEMENT_IN_PROGRESS` when a replacement is cancelled, and from `SERVICE_ACTIVITY_IN_PROGRESS` once the service visit is fulfilled. Does not cover cases where payment is missed (`RENEWAL_OVERDUE`) or a service/replacement is in flight — those are separate states. |
 | `RENEWAL_OVERDUE` | Tenure ended, renewal pending (~4%) |
 | `PURCHASED` | Customer exercised rent-to-buy (~1%) |
 | `PICKUP_TO_BE_SCHEDULED` | Due for pickup, scheduling not started (<1%) |
