@@ -166,14 +166,12 @@ Note all flattened column names (Databricks auto-generates these from JSONB — 
 -- Row count
 SELECT COUNT(*) AS total_rows
 FROM furlenco_silver.order_management_systems_evolve.[name]
-WHERE Op != 'D'
 ```
 
 ```sql
 -- State distribution — NO ROUND(), compute pct manually from raw counts
 SELECT state, COUNT(*) AS cnt
 FROM furlenco_silver.order_management_systems_evolve.[name]
-WHERE Op != 'D'
 GROUP BY state
 ORDER BY cnt DESC
 ```
@@ -190,7 +188,6 @@ SELECT
   SUM(CASE WHEN [col1] IS NULL THEN 1 ELSE 0 END) AS col1_nulls,
   SUM(CASE WHEN [col2] IS NULL THEN 1 ELSE 0 END) AS col2_nulls
 FROM furlenco_silver.order_management_systems_evolve.[name]
-WHERE Op != 'D'
 ```
 
 - `> 90% null` → "null until [lifecycle event]"
@@ -201,7 +198,7 @@ WHERE Op != 'D'
 ```sql
 SELECT [key_columns]
 FROM furlenco_silver.order_management_systems_evolve.[name]
-WHERE Op != 'D' AND state = '[common_state]'
+WHERE state = '[common_state]'
 LIMIT 5
 ```
 
