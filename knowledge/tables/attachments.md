@@ -17,7 +17,7 @@ One record per add-on product linked to an order. Attachments always belong to a
 
 | State | Meaning |
 |-------|---------|
-| `PICKED_UP` | Terminal. Physical return logistics complete — attachment collected from customer, `pickup_date` set, all VAS expired (~45%). Ends this attachment's lifecycle only; the parent item may still be active (22 known state-mismatch cases, tracked in `#sms_alerts_new`). |
+| `PICKED_UP` | Terminal. Physical return logistics complete — attachment collected from customer, `pickup_date` set, all VAS expired (~45%). Ends this attachment's lifecycle|
 | `CANCELLED` | Cancelled before delivery (~33%) |
 | `ACTIVE` | On rent with customer (~16%) |
 | `RENEWAL_OVERDUE` | Tenure ended, renewal pending (~4%) |
