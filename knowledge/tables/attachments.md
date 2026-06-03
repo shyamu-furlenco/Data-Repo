@@ -9,7 +9,7 @@ refresh_cadence: continuous (CDC)
 
 ## Description
 
-One record per add-on product linked to an order. Attachments always belong to a `composite_item` — they are never standalone. A composite item groups a primary `item` with its accessory attachments (e.g. a bed frame with pillows). Both the `order_id` and `composite_item_id` are always present on an attachment. Join to `orders` via `order_id` for order-level context. Join to `composite_items` via `composite_item_id` for autopay, warranty, and refund-hold-back fields (those columns live on the composite item, not the attachment). Much smaller volume than `items` (~27K vs ~2.7M).
+One record per add-on product linked to an order. Attachments always belong to a `composite_item` — they are never standalone. A composite item groups a primary `item` with its accessory attachments (e.g. a washing machine with its cover). Both the `order_id` and `composite_item_id` are always present on an attachment. Join to `orders` via `order_id` for order-level context. Join to `composite_items` via `composite_item_id` for autopay, warranty, and refund-hold-back fields (those columns live on the composite item, not the attachment). Much smaller volume than `items` (~27K vs ~2.7M).
 
 **Difference from items:** `items` are the primary rented/purchased products. `attachments` are secondary add-ons scoped to a composite item group.
 
