@@ -33,8 +33,7 @@ If the user hasn't specified, infer from context: if no `.md` file exists → Mo
 4. **Always run the Databricks queries.** Never estimate row counts, state distributions, or NULL rates.
 5. **Never use `ROUND()` in Databricks MCP queries** — it causes a JSON serialization error. Compute percentages manually from raw `COUNT(*)` values.
 6. **Never assume a column is nullable based on the entity field alone.** Cross-check with the migration DDL (`nullable = false` in JPA + `NOT NULL` in DDL).
-7. **Every SQL example in the output must include `Op != 'D'`.**
-8. **If anything is ambiguous after checking both sources, say so explicitly in the doc** — do not guess.
+7. **If anything is ambiguous after checking both sources, say so explicitly in the doc** — do not guess.
 
 ---
 
@@ -62,7 +61,6 @@ Use `mcp__databricks-sql__run_sql` for all queries. Target:
 - Schema: `order_management_systems_evolve`
 - Table: `[table_name]`
 
-Always filter `Op != 'D'` to exclude deleted CDC records.
 
 ---
 
@@ -250,7 +248,7 @@ refresh_cadence: continuous (CDC)
 | ingestion_timestamp | timestamp | When record arrived in Databricks | `2025-03-15T11:00:05Z` | No |
 
 ## Common queries
-[3–5 SQL examples, all with Op != 'D']
+[3–5 SQL examples]
 
 ## Lifecycle column changes
 ### [Event name]
@@ -258,7 +256,6 @@ refresh_cadence: continuous (CDC)
 |--------|--------|
 
 ## Caveats
-- Always filter `Op != 'D'` — without this, deleted CDC records inflate counts.
 - All timestamp columns are stored in UTC. Convert to IST: `CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', col)`.
 - Boolean-named columns store literal strings `'true'`/`'false'` — compare with strings, not booleans.
 - `_rescued_data` is an Auto Loader system column — ignore for analytics.
@@ -302,7 +299,6 @@ Run this before writing the file. Do not publish until every item passes.
 - [ ] Flattened variant column names verified
 
 **Output:**
-- [ ] Every SQL example has `Op != 'D'`
 - [ ] All 4 standard caveats present
 - [ ] CDC system columns at end of Columns table
 - [ ] `state = 'ACTIVE'` caveat present if table has multi-state "active" business grouping
