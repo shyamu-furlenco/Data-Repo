@@ -15,7 +15,7 @@ One record per product (item) within an order. This is the primary table for que
 
 | State | Meaning |
 |-------|---------|
-| `ACTIVE` | Currently on rent with the customer (~23%) |
+| `ACTIVE` | Item is physically with the customer and the subscription is running in good standing (~23%). `tenure_start_date`, `tenure_end_date`, `charged_till_date`, and `activation_date` are all set at this point; all VAS are activated. Reached from `DELIVERED → ACTIVE` (standard, no installation) or `INSTALLED → ACTIVE` (installation required — e.g. appliances). Also re-entered from `REPLACEMENT_IN_PROGRESS` when a replacement is cancelled, and from `SERVICE_ACTIVITY_IN_PROGRESS` once the service visit is fulfilled. Does not cover cases where payment is missed (`RENEWAL_OVERDUE`) or a service/replacement is in flight — those are separate states. |
 | `PICKED_UP` | Terminal. Physical return logistics complete — Item collected from customer,  `pickup_date`   set, all VAS expired (~45%). Ends this items's lifecycle |
 | `CANCELLED` | Item cancelled before delivery (~29%) |
 | `RENEWAL_OVERDUE` | Tenure ended, renewal payment pending (~4%) |
