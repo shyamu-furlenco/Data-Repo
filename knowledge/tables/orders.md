@@ -96,6 +96,7 @@ SELECT COUNT(*) as order_count
 FROM furlenco_silver.order_management_systems_evolve.orders
 WHERE Op != 'D'
   AND CONVERT_TIMEZONE('UTC', 'Asia/Kolkata', created_at) >= DATE_TRUNC('month', CURRENT_DATE)
+  AND state <> 'CANCELLED'
 ```
 
 **Orders by vertical and state:**
@@ -103,6 +104,7 @@ WHERE Op != 'D'
 SELECT vertical, state, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.orders
 WHERE Op != 'D'
+AND state <> 'CANCELLED'
 GROUP BY vertical, state
 ORDER BY cnt DESC
 LIMIT 30
@@ -113,6 +115,7 @@ LIMIT 30
 SELECT source, channel, COUNT(*) as cnt
 FROM furlenco_silver.order_management_systems_evolve.orders
 WHERE Op != 'D'
+AND state <> 'CANCELLED'
 GROUP BY source, channel
 ORDER BY cnt DESC
 LIMIT 20
@@ -126,6 +129,7 @@ LEFT JOIN furlenco_silver.order_management_systems_evolve.snapshotted_addresses 
   ON ord.snapshotted_delivery_address_id = sa.id
 WHERE ord.Op != 'D'
   AND sa.Op != 'D'
+  AND state <> 'CANCELLED'
 GROUP BY sa.state, sa.city
 ORDER BY cnt DESC
 LIMIT 20

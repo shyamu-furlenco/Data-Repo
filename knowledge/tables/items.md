@@ -231,6 +231,12 @@ FROM furlenco_silver.order_management_systems_evolve.items
 WHERE Op != 'D'
 GROUP BY state ORDER BY cnt DESC
 ```
+**List of Items:**
+```sql 
+SELECT id, name, state, created_at
+FROM furlenco_silver.order_management_systems_evolve.items
+WHERE state <> 'CANCELLED'
+```
 
 ## Renewal column updates
 
